@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Face Detection</title>
+    <style>
+        .container {
+            position: relative;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <video width="640" height="480"></video>
+        <canvas width="640" height="480"></canvas>
+    </div>
+
+    <button>start</button>
+
+    <script src="js/clmtrackr.min.js"></script>
+    <script type="text/javascript">
+        var NECK = 80;  // NECK HEIGHT
+        var BODY = 350; // BODY HEIGHT
+        var WIDTH = 2.5; // BODY WIDTH
+
+        var ctracker;
+        var video = document.querySelector("video");
+
+        var canvas = document.querySelector("canvas");
+        var cc = canvas.getContext("2d");
+
+        navigator.mediaDevices
+            .getUserMedia({ audio: false, video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+                video.onloadedmetadata = function (e) {
+                    video.play();
+                };
+            })
+            .catch(function (error) {
+                console.log(error.name + ": " + error.message);
+            });
+
+        console.log("hoge")
+        ctracker = new clm.tracker();
+        ctracker.init();
+
+        function startTracking() {
+            video.play();
+            ctracker.start(video);
+
+            drawLoop();
+        }
+
+        function drawLoop() {
+            requestAnimationFrame(drawLoop);
+            cc.clearRect(0, 0, canvas.width, canvas.height);
+
+            var position = ctracker.getCurrentPosition();
+            if (position) {
+                ctracker.draw(canvas);
+
+                var width = (position[13][0] - position[1][0]) * WIDTH;
+                var bottom = position[7];
+                var x = position[7][0] - width / 2;
+                var y = position[7][1] + NECK;
+                drawRect(width, x, y);
+            }
+        }
+
+        function drawRect(width, x, y) {
+            cc.fillStyle = "#ff0000";
+            cc.fillRect(x, y, width, BODY);
+        }
+
+        document
+            .querySelector("button")
+            .addEventListener("click", startTracking, false);
+
+    </script>
+</body>
+
+</html>
